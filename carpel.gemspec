@@ -7,9 +7,9 @@ Gem::Specification.new do |spec|
   spec.name          = "carpel"
   spec.version       = Carpel::VERSION
   spec.authors       = ["Richard Smith-Unna"]
-  spec.email         = ["richardsmith404@gmail.com"]
-  spec.summary       = %q{TODO: Write a short summary. Required.}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
+  spec.email         = ["rds45@cam.ac.uk"]
+  spec.summary       = %q{Bayesian sequence segmentation for Ruby.}
+  spec.description   = %q{Ruby implementations of Bayesian sequence segmentation algorithms.}
   spec.homepage      = ""
   spec.license       = "MIT"
 
@@ -18,6 +18,10 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
+  spec.add_development_dependency "shoulda"
+  spec.add_development_dependency "turn"
+  spec.add_development_dependency "simplecov"
+  spec.add_development_dependency "coveralls"
   spec.add_development_dependency "bundler", "~> 1.6"
   spec.add_development_dependency "rake"
 end

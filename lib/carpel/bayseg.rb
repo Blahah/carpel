@@ -6,7 +6,7 @@ class BayesSegmenter
   # create a new BayesSegementer with a sequence
   # and optionally a maximum number of segments
   def initialize seq, maxk=10
-   @seq = seq
+   @seq = seq.is_a?(String) ? seq.to_a : seq
    @maxk = maxk
    @pRk_left_i = [[nil] * @seq.length] * @maxk
    @pR_unitk = {}
@@ -96,7 +96,7 @@ class BayesSegmenter
     mlR = marginal_likelihood_R
     pkR = pRk * pk / mlR
     # puts "p(R|k=#{k}) = #{pRk}, p(K=#{k}) = #{pk}, p(R) = #{mlR}, so p(k=#{k}|R) = #{pkR}"
-    puts "p(k=#{k}|R) = #{pkR}"
+    # puts "p(k=#{k}|R) = #{pkR}"
     pkR
   end
 
@@ -109,38 +109,8 @@ class BayesSegmenter
   # with an upper bound of @maxk, returning an array [n_segments, prob].
   def n_segments
     (1..@maxk).map do |k|
-      [k, c.prob_k_given_R k]
-    end.sort_by { |x| x[1] }.last
-  end
-
-end
-
-class Integer
-
-  # binomial coefficient: n choose k
-  def choose(k)
-    # n!/(n-k)!
-    top = (self-k+1 .. self).inject(1, &:*)
-    # k!
-    bottom = (2 .. k).inject(1, &:*)
-    top / bottom
-  end
-
-end
-
-class Array
-
-  def count_states
-    states = {}
-    self.each do |x|
-      states[x] ||= 0
-      states[x] += 1
-    end
-    states
-  end
-
-  def product
-    self.inject(1, &:*)
+      [k, self.prob_k_given_R(k)]
+    end.sort_by { |x| x[1] }.last[0]
   end
 
 end # BayesSegmenter
