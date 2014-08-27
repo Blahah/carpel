@@ -1,6 +1,14 @@
-# Carpel
+=======
+carpel
+======
 
-TODO: Write a gem description
+Bayesian segmentation Ruby gem
+
+## Algorithm
+
+Currently implemented:
+
+- Bayesian Inference of Sequence Segmentation from [Kelly et al. (2011)](http://www.plosone.org/article/info%3Adoi%2F10.1371%2Fjournal.pone.0025666).
 
 ## Installation
 
