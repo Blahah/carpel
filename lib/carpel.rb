@@ -1,5 +1,6 @@
 require "carpel/version"
+require "carpel/bayseg"
 
 module Carpel
-  # Your code goes here...
+
 end
