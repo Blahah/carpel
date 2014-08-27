@@ -2,15 +2,15 @@
 carpel
 ======
 
-Bayesian segmentation Ruby gem
+Bayesian segmentation Ruby gem.
 
-## Algorithm
+### Algorithm
 
 Currently implemented:
 
 - Bayesian Inference of Sequence Segmentation from [Kelly et al. (2011)](http://www.plosone.org/article/info%3Adoi%2F10.1371%2Fjournal.pone.0025666).
 
-## Installation
+### Installation
 
 Add this line to your application's Gemfile:
 
@@ -24,14 +24,15 @@ Or install it yourself as:
 
     $ gem install carpel
 
-## Usage
+### Usage
 
 TODO: Write usage instructions here
 
-## Contributing
+### Contributing
 
 1. Fork it ( https://github.com/[my-github-username]/carpel/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create a new Pull Request
+4. Include tests. No tests, no merge.
+5. Push to the branch (`git push origin my-new-feature`)
+6. Create a new Pull Request
