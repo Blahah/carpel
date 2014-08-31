@@ -5,6 +5,7 @@ require "base/integer"
 
 require "carpel/version"
 require "carpel/bayseg"
+require "carpel/liuseg"
 
 module Carpel
 

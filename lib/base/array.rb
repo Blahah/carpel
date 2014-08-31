@@ -13,4 +13,8 @@ class Array
     self.inject(1, &:*)
   end
 
+  def sum
+    self.inject(0, &:+)
+  end
+
 end
