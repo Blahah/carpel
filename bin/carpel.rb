@@ -4,15 +4,24 @@ require 'carpel'
 require 'trollop'
 
 opts = Trollop::options do
-  opt :sequence, "sequence to analyse", :type => :string
-  opt :maxk, "maximum number of change-points", :default => 5
+
+  opt :sequence,
+      "sequence to analyse",
+      :type => :string
+
+  opt :maxk,
+      "maximum number of change-points",
+      :default => 5
+
   opt :nullprior,
       "prior probability of having no change-points",
       :default => 0.5
+
   opt :alphabet,
       "full alphabet for the sequence",
       :type => :string,
       :default => 'actg'
+
 end
 
 s = Carpel::LiuSegmenter.new(opts.sequence.to_a,

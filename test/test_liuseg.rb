@@ -2,118 +2,156 @@ require 'helper'
 
 class TestLiuSegmenter < Test::Unit::TestCase
 
-  context "Priors on k" do
+  context "Initializing a Segmenter" do
 
-    setup do
-      seq = 'abcabcabc'.to_a
-      @seg = Carpel::LiuSegmenter.new seq, 10
-    end
-
-    should "be 0.5 for k=1, i.e. a single segment" do
-      assert_equal 0.5, @seg.prior_k(1)
-    end
-
-    should "be equal for all k > 1, i.e. more than one segment" do
-      p = 0.5 / 9
-      (2..10).each do |k|
-        assert_equal p, @seg.prior_k(k), "k = #{k}"
+    should "reject an empty sequence" do
+      assert_raise Carpel::EmptySequenceError do
+        Carpel::LiuSegmenter.new []
       end
     end
 
   end
 
-  context "Prebuilding the recursion" do
+  context "Priors on k" do
 
     setup do
-      seq = 'aaaabbbbb'.to_a # length 9
-      @seg = Carpel::LiuSegmenter.new seq, 10
+      seq = 'abcabcabc'.to_a
+      @seg1 = Carpel::LiuSegmenter.new seq,
+                                       3,
+                                       0.5
+      @seg2 = Carpel::LiuSegmenter.new seq,
+                                       4,
+                                       0.2
     end
 
-    should "set values for subsequences of unit k" do
-      @seg.prob_R_given_unit_k
-      # p @seg.p_R_k1rev
-      # p @seg.p_R_ki[1]
-      assert_equal 8, @seg.p_R_k1rev.length
-      assert_equal 8, @seg.p_R_ki[1].length
+    should "be as specified for the null case" do
+      assert_equal 0.5, @seg1.prior_k(0)
+      assert_equal 0.2, @seg2.prior_k(0)
     end
 
-  end
-
-  context "Calculating p(R|k)" do
-
-    should "get P of sequence given single segment in simple cases" do
-      # with a sequence of length one we have a single state,
-      # and the probability of the sequence given a model with
-      # a single segment should be 1
-      seq = 'a'.to_a
-      segmenter = Carpel::LiuSegmenter.new(seq, 5)
-      assert_equal 1.0,
-                   segmenter.prob_R_given_unit_k,
-                   "length 1, single state"
-      # # with a sequence of length four but a single state,
-      # # the probability of the sequence given a model with
-      # # a single segment should be 1
-      # seq = 'aaaa'.to_a
-      # segmenter = Carpel::LiuSegmenter.new(seq, 5)
-      # assert_equal 1.0,
-      #              segmenter.prob_R_given_unit_k,
-      #              "length 4, single state"
-      # with sequence of length two and two states,
-      # the probability of the sequence given a model with
-      # a single segment should be ((1/6))^5) = ~0.000128600
-      seq = 'ab'.to_a
-      segmenter = Carpel::LiuSegmenter.new(seq, 5)
-      assert_in_delta 0.0001286,
-                      segmenter.prob_R_given_unit_k,
-                      0.0000001,
-                      "length 2, two states"
-      # with sequence of length 8 and two states,
-      # the probability of the sequence given a model with
-      # a single segment should be 1.007621098853471e-14
-      seq = 'abababab'.to_a
-      segmenter = Carpel::LiuSegmenter.new(seq, 5)
-      assert_in_delta 1.007621098853471e-14,
-                      segmenter.prob_R_given_unit_k,
-                      0.0000001,
-                      "length 8, two states"
+    should "be uniformly spead across other cases" do
+      p1 = (1 - 0.5) / 3
+      (1..3).each do |k|
+        assert_equal p1, @seg1.prior_k(k)
+      end
+      p2 = (1 - 0.2) / 4
+      (1..4).each do |k|
+        assert_equal p2, @seg2.prior_k(k)
+      end
     end
 
   end
 
-  context "Estimating numbers of segments" do
+  context "Borodovsky & Ekisheva (2006) worked examples" do
 
-    should "match published version" do
-      seq = 'aaaaaaaaaabbbbbbbbbbbccccccccc'
-      segmenter = Carpel::LiuSegmenter.new(seq, 5)
-      expected = [
-        5.31632006098326385e-05,
-        0.0526287476085534501,
-        0.821008586822634895,
-        0.111656951100350288,
-        0.0146525512678515345
-      ]
-      probs = (1..5).map{ |k| segmenter.prob_k_given_R(k) }
-      assert_equal expected, probs
+    setup do
+      seq = 'ggca'.to_a
+      @seg = Carpel::LiuSegmenter.new seq,
+                                      3,
+                                      0.25,
+                                      'acgt'.to_a
     end
 
-    should "estimate 3 segments correctly" do
-      seq = 'aaaaaaaaaabbbbbbbbbbbccccccccc'
-      segmenter = Carpel::LiuSegmenter.new(seq, 5)
-      assert_equal 3, segmenter.n_segments
+    should "match for k=0" do
+      expected = 1/420.0
+      assert_in_delta expected, @seg.prob_R_given_zero_k, 0.001
     end
 
-    should "estimate 2 segments correctly" do
-      seq = 'aaaaaaaaaaaaaaabbbbbbbbbbbbbbb'
-      segmenter = Carpel::LiuSegmenter.new(seq, 5)
-      assert_equal 2, segmenter.n_segments
+    should "match for k=1" do
+      expected = 0.0009
+      actual = @seg.prob_R_given_unit_k * 0.25
+      assert_equal expected, actual.round(4)
     end
 
-    should "estimate 1 segment correctly" do
-      seq = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-      segmenter = Carpel::LiuSegmenter.new(seq, 5)
-      assert_equal 1, segmenter.n_segments
+    should "match for k=2" do
+      expected = 0.001
+      actual = @seg.prob_R_given_k(2) * 0.25
+      assert_equal expected, actual.round(3)
+    end
+
+    should "match for k=3" do
+      expected = (0.25**4).round(4)
+      actual = @seg.prob_R_given_k(3)
+      assert_equal expected, actual.round(4)
     end
 
   end
+
+  context "Manually worked examples with DNA seq 'ACT'" do
+
+    setup do
+      seq = 'act'.to_a
+      @seg = Carpel::LiuSegmenter.new seq,
+                                      2,
+                                      (1/3.0),
+                                      'acgt'.to_a
+    end
+
+    should "match for k=0" do
+      expected = (1 / 720.0) * 6
+      actual = @seg.prob_R_given_k(0)
+      assert_equal expected, actual
+    end
+
+    should "match for k=1" do
+      expected = 0.0125
+      actual = @seg.prob_R_given_k(1)
+      assert_equal expected, actual
+    end
+
+    should "match for k=2" do
+      expected = 0.015625
+      actual = @seg.prob_R_given_k(2)
+      assert_equal expected, actual
+    end
+
+  end
+
+  # context "n_segments" do
+  #
+  #   should "match Kelly et al. published version" do
+  #     seq = 'aaaaaaaaaabbbbbbbbbbbccccccccc'
+  #     segmenter = Carpel::LiuSegmenter.new(seq, 5)
+  #     expected = [
+  #       5.31632006098326385e-05,
+  #       0.0526287476085534501,
+  #       0.821008586822634895,
+  #       0.111656951100350288,
+  #       0.0146525512678515345
+  #     ]
+  #     probs = (1..5).map{ |k| segmenter.prob_k_given_R(k) }
+  #     probs.each_with_index do |p, i|
+  #       assert_in_delta expected[i], p, 0.01
+  #     end
+  #   end
+  #
+  #   should "estimate 3 segments correctly" do
+  #     seq = 'aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbcccccccccccccccccc'
+  #     segmenter = Carpel::LiuSegmenter.new(seq,
+  #                                          5,
+  #                                          0.2,
+  #                                          'abcdefghijklmnopqrst'.to_a)
+  #     assert_equal 3, segmenter.n_segments[0]
+  #   end
+  #
+  #   should "estimate 2 segments correctly" do
+  #     seq = 'aaaaaaaaaaaaaaabbbbbbbbbbbbbbb'
+  #     segmenter = Carpel::LiuSegmenter.new(seq,
+  #                                          5,
+  #                                          0.2,
+  #                                          'abcdefghijklmnopqrst'.to_a)
+  #     assert_equal 2, segmenter.n_segments[0]
+  #   end
+  #
+  #   should "estimate 1 segment correctly" do
+  #     seq = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+  #     segmenter = Carpel::LiuSegmenter.new(seq,
+  #                                          5,
+  #                                          0.2,
+  #                                          'abcdefghijklmnopqrst'.to_a)
+  #     assert_equal 1, segmenter.n_segments[0]
+  #   end
+  #
+  # end
 
 end
