@@ -64,9 +64,9 @@ class TestLiuSegmenter < Test::Unit::TestCase
     end
 
     should "match for k=2" do
-      expected = 0.001
-      actual = @seg.prob_R_given_k(2) * 0.25
-      assert_equal expected, actual.round(3)
+      expected = 0.00156
+      actual = @seg.prob_R_given_k(2)
+      assert_equal expected, actual.round(5)
     end
 
     should "match for k=3" do
