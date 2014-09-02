@@ -136,11 +136,10 @@ class LiuSegmenter
     # now recursively lookup the components for this k
     lowerk = @p_R_ki[k-1]
     onek = @p_R_ki[1]
-    onek.each{ |r| p r }
     # build the lookup matrix for all possible subsequences
     # by looking up values in the matrices built for lower
     # values of k
-    (0...@seq.length - 1).each do |i|
+    (0..(@seq.length - 1)).each do |i|
       @p_R_ki[k][i] = []
       (@seq.length - 1).downto(i).each do |j|
         if i == j
@@ -155,19 +154,18 @@ class LiuSegmenter
           right = onek[i+1][j]
           # compute the probability for this segmentation
           segresult = left * right
-          puts "i = #{i}, j = #{j}, seq = #{@seq[i..j]}, left = #{left}, right = #{right}, result = #{segresult}"
         end
         # save it for lookup
         @p_R_ki[k][i][j] = segresult
       end
     end
-    # we have a flat prior on observing any given segmentation
+    # we have a flat prior on observing any given segmentation.
     # to avoid zero priors as per Cromwell's rule, we have a
     # lower limit of Float::MIN
     pA = [1 / ((@seq.length-1).choose(k)).to_f, Float::MIN].max
     # now we can calculate the probability for k=k
     matrix = @p_R_ki[k]
-    result = (0...matrix.length - 1).map do |i|
+    result = ((k-1)...(matrix.length - 1)).map do |i|
       # probability for the sequence to the left of the change point
       # i.e. from 0..i
       left = matrix[0][i]
