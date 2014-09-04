@@ -22,7 +22,7 @@ class Segmentations
       # create the segment from this start point to
       # this end-point. If this is the final segment,
       # the end-point is always the end of the sequence.
-      segments[@n - n] = [start, (n == 1? @length-1 : j)]
+      segments[@n - n] = [start, (n == 1 ? @length-1 : j)]
       # Recursively generate any remaining segments.
       generate_segments(n-1, j+1, stop, segments, &block)
       # If this is the final segment, we stop iterating

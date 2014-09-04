@@ -17,6 +17,7 @@ class TestLiuSegmentations < Test::Unit::TestCase
         assert_equal expected[i], seg
         i += 1
       end
+      assert_equal i, expected.length
     end
 
     should "work for n=3" do
@@ -34,6 +35,17 @@ class TestLiuSegmentations < Test::Unit::TestCase
         assert_equal expected[i], seg
         i += 1
       end
+      assert_equal i, expected.length
+    end
+
+    should "work for n=4" do
+      s = Carpel::Segmentations.new(4, 6)
+      expected = 5.choose(3)
+      i = 0
+      s.each do |seg|
+        i += 1
+      end
+      assert_equal expected, i
     end
 
   end
