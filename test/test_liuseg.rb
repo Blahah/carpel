@@ -102,7 +102,7 @@ class TestLiuSegmenter < Test::Unit::TestCase
     should "match for k=0" do
       expected = (1 / 720.0) * 6
       actual = @seg.prob_R_given_k(0)
-      assert_equal expected, actual
+      assert_equal expected.round(9), actual.round(9)
     end
 
     should "match for k=1" do
@@ -180,7 +180,7 @@ class TestLiuSegmenter < Test::Unit::TestCase
 
     should "have an accuracy of >= 90%" do
       score = 0
-      total = 10
+      total = 20
       alphabet = (6..20).to_a
       total.times do |i|
         # generate a sequence of log2-discretised values
@@ -189,9 +189,14 @@ class TestLiuSegmenter < Test::Unit::TestCase
         n = rand(1..4)
         m = n
         seq = []
+        prev=-1
         while m > 0
           mean = rand(7..19)
-          gen = Rubystats::NormalDistribution.new(mean, 0.4)
+          while (mean-prev).abs < 4
+            mean = rand(7..19)
+          end
+          prev = mean
+          gen = Rubystats::NormalDistribution.new(mean, 0.6)
           seq += gen.rng(100/n).map{ |x| x.to_i }
           m -= 1
         end
@@ -201,11 +206,11 @@ class TestLiuSegmenter < Test::Unit::TestCase
                                              0.2,
                                              alphabet)
         ans = segmenter.n_changepoints_exact
-        puts "detected #{ans[0]} cps (p=#{ans[1]}), #{n-1} was the real number"
-        # update the score
+        # puts "detected #{ans[0]} cps (p=#{ans[1]}), #{n-1} was the real number"
+        # # update the score
         score += 1 if ans[0] == n-1
       end
-      puts "got #{score} out of #{total} right"
+      # puts "got #{score} out of #{total} right"
     end
 
   end
