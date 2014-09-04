@@ -2,6 +2,7 @@
 require "base/array"
 require "base/string"
 require "base/integer"
+require "base/math"
 
 require "carpel/version"
 require "carpel/liuseg"

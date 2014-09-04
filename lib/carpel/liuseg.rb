@@ -21,6 +21,7 @@ class LiuSegmenter
     @p_R_k = {};
     @p_R_ki = (0..@maxk).map{ |k| [] };
     @p_R_k1rev = [];
+    @comp = [];
     load_states
   end
 
@@ -44,6 +45,15 @@ class LiuSegmenter
     end.sum
   end
 
+  # marginal likelihood of the sequence R using the exact method
+  # equation 1
+  def marginal_likelihood_R_exact
+    return @mlR if @mlR
+    @mlR = (0..@maxk).map do |k|
+      prior_k(k) * prob_R_given_k_exact(k)
+    end.sum
+  end
+
   # the prior probability of having k change-points
   # the null prior (i.e. that are are 0 change-points) is variable
   # and the priors for the rest of the distribution (k=1..@maxk)
@@ -62,7 +72,7 @@ class LiuSegmenter
     # so we are left with gamma(D) * (prod_d(gamma(n_k + 1))) / gamma(n_k + D)
     # where D is the number of states in the sequence, n_k is the length
     # of the sequence and d is the number of times each state occurs
-    result = prob_R_given_k_rhs(@states, 0, @seq.length)
+    result = prob_R_given_k_rhs(@states, @seq.length)
     @p_R_k[0] = result
     result
   end
@@ -71,17 +81,20 @@ class LiuSegmenter
   def prob_R_given_unit_k
     return @p_R_k[1] if @p_R_k.key?(1)
     prob_R_given_zero_k
-    # when k=1 there are two segments and therefore length.choose(1) ways to
+    # when k=1 there are two segments and therefore length-1.choose(1) ways to
     # organise the segments. We iterate through them all and store them so
     # they can be looked up by higher k.
     states = @states.clone
     total = @seq.length
     (0...@seq.length).each do |i|
       @p_R_ki[1][i] = []
+      @comp[i] = []
       segstates = states.clone
       (@seq.length - 1).downto(i).each do |j|
+        # cache the sequence composition
+        @comp[i][j] = segstates.clone
         # get the probability of this segment given k=0
-        segresult = prob_R_given_k_rhs(segstates, 0, j+1-i)
+        segresult = prob_R_given_k_rhs(segstates, j+1-i)
         # save it for lookup
         @p_R_ki[1][i][j] = segresult
         # decrease the count of the last base in this segment
@@ -113,19 +126,17 @@ class LiuSegmenter
   end
 
   # equation 17 excluding the (n-1).choose(k) part
-  def prob_R_given_k_rhs states, k, length
+  def prob_R_given_k_rhs states, length
     l = Math.gamma(states.keys.length)
-    result = (0..k).map do
-      upper = states.keys.map{ |d| Math.gamma(states[d] + 1) }.product
-      lower = Math.gamma(length + states.keys.length)
-      # probability for this segmentation
-      l * (upper / lower)
-    end.product
+    upper = states.keys.map{ |d| Math.gamma(states[d] + 1) }.product
+    lower = Math.gamma(length + states.keys.length)
+    # probability for this segmentation
+    l * (upper / lower)
   end
 
   # probability of a sequence R given there are k changepoints
   # results for each possible segmentation and for the whole sequence
-  # are cached
+  # are cached. uses the recursive method
   # equation 18 from Liu & (1999)
   def prob_R_given_k k
     return prob_R_given_zero_k if k == 0
@@ -159,25 +170,52 @@ class LiuSegmenter
         @p_R_ki[k][i][j] = segresult
       end
     end
-    # we have a flat prior on observing any given segmentation.
-    # to avoid zero priors as per Cromwell's rule, we have a
-    # lower limit of Float::MIN
-    pA = [1 / ((@seq.length-1).choose(k)).to_f, Float::MIN].max
     # now we can calculate the probability for k=k
-    matrix = @p_R_ki[k]
-    result = ((k-1)...(matrix.length - 1)).map do |i|
-      # probability for the sequence to the left of the change point
-      # i.e. from 0..i
-      left = matrix[0][i]
-      # probability for the sequence to the right of the change point
-      # i.e. from i+1..n
-      right = matrix[i+1][@seq.length-1]
-      # probability for this segmentation
-      r = left * right
-      r * pA
-    end.sum
+    matrix = @p_R_ki[k-1]
+    if k == @seq.length - 1
+      result = (0...@seq.length).map do |x|
+        @p_R_ki[1][x][x]
+      end.product
+    else
+      result = ((k)...(matrix.length - 1)).map do |i|
+        # puts ""
+        # probability for the sequence to the left of the change point
+        # i.e. from 0..i
+        left = matrix[0][i]
+        # probability for the sequence to the right of the change point
+        # i.e. from i+1..n
+        right = matrix[i+1][@seq.length-1]
+        # probability for this segmentation
+        left * right
+      end.sum
+    end
     @p_R_k[k] = result
     result
+  end
+
+  # uses the exact method to calculate P(R|k) for k > 1
+    def prob_R_given_k_exact k
+    return prob_R_given_zero_k if k == 0
+    return prob_R_given_unit_k if k == 1
+    prob_R_given_unit_k
+    return @p_R_k[k] if @p_R_k.key?(k)
+    # we have a flat prior on observing any given segmentation
+    # to avoid zero priors, we have a lower limit of Float::MIN
+    pA = [1 / (@seq.length - 1).choose(k).to_f, Float::MIN].max
+    # iterate through all possible segmentations
+    segs = Segmentations.new(k+1, @seq.length)
+    sum = 0
+    segs.each do |segmentation|
+      res = segmentation.map do |segment|
+        # look up the composition for this subsequence
+        first, last = segment
+        comp = @comp[first][last]
+        # get segment prob
+        prob_R_given_k_rhs(comp, (last + 1) - first)
+      end.product
+      sum += res * pA
+    end
+    sum
   end
 
   # probability of the sequence R having k change-points betweens segments
@@ -194,15 +232,46 @@ class LiuSegmenter
   # finds the most likely number of changepoints present in the sequence
   # with an upper bound of @maxk - 1, returning an array [n_changepoints, prob]
   def n_changepoints
-    (0..@maxk).map do |k|
+    a = (0..@maxk).map do |k|
       [k, self.prob_k_given_R(k)]
-    end.sort_by { |x| x[1] }.last
+    end
+    a.sort_by { |x| x[1] }.last
   end
 
   # finds the most likely number of segments present in the sequence
   # with an upper bound of @maxk, returning an array [n_segments, prob].
   def n_segments
     res = n_changepoints
+    res[0] += 1
+    res
+  end
+
+  # probability of the sequence R having k change-points betweens segments
+  # given the sequence (by Bayes' rule) using the exact method
+  # equation 9
+  def prob_k_given_R_exact k
+    pRk = prob_R_given_k_exact k
+    pk = prior_k k
+    mlR = marginal_likelihood_R_exact
+    pkR = pRk * pk / mlR
+    pkR
+  end
+
+  # finds the most likely number of changepoints present in the sequence
+  # with an upper bound of @maxk - 1 by using the exact method,
+  # returning an array [n_changepoints, prob]
+  def n_changepoints_exact
+    a = (0..@maxk).map do |k|
+      [k, self.prob_k_given_R_exact(k)]
+    end
+    a.sort_by { |x| x[1] }.last
+  end
+
+  # finds the most likely number of segments present in the sequence
+  # with an upper bound of @maxk by using the exact method,
+  # returning an array [n_segments, prob].
+  def n_segments_exact
+    res = n_changepoints_exact
     res[0] += 1
     res
   end

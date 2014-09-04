@@ -20,6 +20,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "trollop"
 
+  spec.add_development_dependency "rubystats"
   spec.add_development_dependency "shoulda"
   spec.add_development_dependency "turn"
   spec.add_development_dependency "simplecov"

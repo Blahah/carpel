@@ -1,5 +1,6 @@
 require 'simplecov'
 require 'coveralls'
+require 'rubystats'
 
 SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
   SimpleCov::Formatter::HTMLFormatter,
