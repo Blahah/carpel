@@ -118,99 +118,116 @@ class TestLiuSegmenter < Test::Unit::TestCase
     end
 
   end
+  #
+  # context "n_segments_exact" do
+  #
+  #   should "match Kelly et al. published version" do
+  #     seq = 'aaaaaaaaaabbbbbbbbbbbccccccccc'
+  #     segmenter = Carpel::LiuSegmenter.new(seq, 4)
+  #     expected = [
+  #       5.31632006098326385e-05,
+  #       0.0526287476085534501,
+  #       0.821008586822634895,
+  #       0.111656951100350288,
+  #       0.0146525512678515345
+  #     ]
+  #     probs = (0..4).map{ |k| segmenter.prob_k_given_R(k) }
+  #     probs.each_with_index do |p, i|
+  #       p p
+  #       # assert_in_delta expected[i], p, 0.01
+  #     end
+  #   end
+  #
+  #   should "estimate 4 segments correctly" do
+  #     seq = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccdddddddddddddddddddddddddddd'
+  #     segmenter = Carpel::LiuSegmenter.new(seq,
+  #                                          3,
+  #                                          0.5,
+  #                                          'abcdefghijklmnopqrst'.to_a)
+  #     assert_equal 4, segmenter.n_segments_exact[0]
+  #   end
+  #
+  #   should "estimate 3 segments correctly" do
+  #     seq = 'aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbcccccccccccccccccc'
+  #     segmenter = Carpel::LiuSegmenter.new(seq,
+  #                                          3,
+  #                                          0.5,
+  #                                          'abcdefghijklmnopqrst'.to_a)
+  #     assert_equal 3, segmenter.n_segments_exact[0]
+  #   end
+  #
+  #   should "estimate 2 segments correctly" do
+  #     seq = 'aaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbb'
+  #     segmenter = Carpel::LiuSegmenter.new(seq,
+  #                                          3,
+  #                                          0.5,
+  #                                          'abcdefghijklmnopqrst'.to_a)
+  #     assert_equal 2, segmenter.n_segments_exact[0]
+  #   end
+  #
+  #   should "estimate 1 segment correctly" do
+  #     seq = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+  #     segmenter = Carpel::LiuSegmenter.new(seq,
+  #                                          3,
+  #                                          0.5  ,
+  #                                          'abcdefghijklmnopqrst'.to_a)
+  #     assert_equal 1, segmenter.n_segments_exact[0]
+  #   end
+  #
+  # end
 
-  context "n_segments_exact" do
-
-    # should "match Kelly et al. published version" do
-    #   seq = 'aaaaaaaaaabbbbbbbbbbbccccccccc'
-    #   segmenter = Carpel::LiuSegmenter.new(seq, 4)
-    #   expected = [
-    #     5.31632006098326385e-05,
-    #     0.0526287476085534501,
-    #     0.821008586822634895,
-    #     0.111656951100350288,
-    #     0.0146525512678515345
-    #   ]
-    #   probs = (0..4).map{ |k| segmenter.prob_k_given_R(k) }
-    #   probs.each_with_index do |p, i|
-    #     p p
-    #     # assert_in_delta expected[i], p, 0.01
+  context "n_changepoints_exact" do
+    #
+    # should "have an accuracy of >= 95%" do
+    #   score = 0
+    #   total = 20
+    #   alphabet = (6..20).to_a
+    #   total.times do |i|
+    #     # generate a sequence of log2-discretised values
+    #     # with length 500 and with between 0 and 4 changepoints
+    #     # values between 2^6..2^20
+    #     n = rand(1..4)
+    #     m = n
+    #     seq = []
+    #     prev=-1
+    #     while m > 0
+    #       mean = rand(7..19)
+    #       while (mean-prev).abs < 4
+    #         mean = rand(7..19)
+    #       end
+    #       prev = mean
+    #       gen = Rubystats::NormalDistribution.new(mean, 0.6)
+    #       seq += gen.rng(80/n).map{ |x| x.to_i }
+    #       m -= 1
+    #     end
+    #     # detect the number of changepoints
+    #     segmenter = Carpel::LiuSegmenter.new(seq,
+    #                                          3,
+    #                                          0.2,
+    #                                          alphabet)
+    #     ans = segmenter.n_changepoints_exact
+    #     # # update the score
+    #     score += 1 if ans[0] == n-1
     #   end
+    #   assert (score / total.to_f) >= 0.95
     # end
-
-    should "estimate 4 segments correctly" do
-      seq = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccdddddddddddddddddddddddddddd'
-      segmenter = Carpel::LiuSegmenter.new(seq,
-                                           3,
-                                           0.5,
-                                           'abcdefghijklmnopqrst'.to_a)
-      assert_equal 4, segmenter.n_segments_exact[0]
-    end
-
-    should "estimate 3 segments correctly" do
-      seq = 'aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbcccccccccccccccccc'
-      segmenter = Carpel::LiuSegmenter.new(seq,
-                                           3,
-                                           0.5,
-                                           'abcdefghijklmnopqrst'.to_a)
-      assert_equal 3, segmenter.n_segments_exact[0]
-    end
-
-    should "estimate 2 segments correctly" do
-      seq = 'aaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbb'
-      segmenter = Carpel::LiuSegmenter.new(seq,
-                                           3,
-                                           0.5,
-                                           'abcdefghijklmnopqrst'.to_a)
-      assert_equal 2, segmenter.n_segments_exact[0]
-    end
-
-    should "estimate 1 segment correctly" do
-      seq = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-      segmenter = Carpel::LiuSegmenter.new(seq,
-                                           3,
-                                           0.5  ,
-                                           'abcdefghijklmnopqrst'.to_a)
-      assert_equal 1, segmenter.n_segments_exact[0]
-    end
 
   end
 
-  context "n_changepoints_exact" do
+  context "Dynamic programming method" do
 
-    should "have an accuracy of >= 90%" do
-      score = 0
-      total = 20
-      alphabet = (6..20).to_a
-      total.times do |i|
-        # generate a sequence of log2-discretised values
-        # with length 500 and with between 0 and 4 changepoints
-        # values between 2^6..2^20
-        n = rand(1..4)
-        m = n
-        seq = []
-        prev=-1
-        while m > 0
-          mean = rand(7..19)
-          while (mean-prev).abs < 4
-            mean = rand(7..19)
-          end
-          prev = mean
-          gen = Rubystats::NormalDistribution.new(mean, 0.6)
-          seq += gen.rng(100/n).map{ |x| x.to_i }
-          m -= 1
-        end
-        # detect the number of changepoints
-        segmenter = Carpel::LiuSegmenter.new(seq,
-                                             3,
-                                             0.2,
-                                             alphabet)
-        ans = segmenter.n_changepoints_exact
-        # puts "detected #{ans[0]} cps (p=#{ans[1]}), #{n-1} was the real number"
-        # # update the score
-        score += 1 if ans[0] == n-1
+    should "match the exact method" do
+      seq = "aaaaaabbbbbbcccccccdddddddd".to_a
+      segmenter = Carpel::LiuSegmenter.new(seq,
+                                           5,
+                                           0.5,
+                                           'abcdefghijklm'.to_a)
+      (1..5).each do |k|
+        rec = segmenter.prob_R_given_k k
+        exa = segmenter.prob_R_given_k_exact k
+        puts "k: #{k} dp: #{rec} exact: #{exa}"
+        assert_equal exa, rec, "k = #{k}"
       end
-      # puts "got #{score} out of #{total} right"
     end
 
   end
